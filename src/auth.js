@@ -84,7 +84,8 @@ const login = (req, res) => {
         if (hash === userObj.hash) {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
-            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+            // , sameSite: 'None', secure: true
             // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true })
             let msg = { username: username, result: 'success' };
             res.status(200).send(msg);
