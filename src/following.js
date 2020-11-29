@@ -78,8 +78,32 @@ const deleteFollowing = (req, res) => {
         });
 }
 
+const getFollowingAvatar = (req, res) => {
+    let username = req.params.user ? req.params.user : req.user.username;
+    const query = Profile.find({ username: username });
+    query.exec(function (err, profile) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!profile || profile.length === 0) {
+            return res.status(401).send('The user does not exist');
+        }
+        let follow = profile[0].following;
+        Profile.find({ username: { $in: follow } }, function (err1, info) {
+            if (err1) {
+                return console.error(err1);
+            }
+            if (info) {
+                let msg = { info: info };
+                res.status(200).send(msg);
+            }
+        });
+    });
+}
+
 module.exports = (app) => {
     app.get('/following/:user?', getFollowing);
     app.put('/following/:user', putFollowing);
     app.delete('/following/:user', deleteFollowing);
+    app.get('/followinginfo', getFollowingAvatar);
 }

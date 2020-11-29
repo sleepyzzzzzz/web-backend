@@ -123,6 +123,41 @@ const putZipcode = (req, res) => {
         });
 }
 
+const getPhone = (req, res) => {
+    let username = req.params.user ? req.params.user : req.user.username;
+    const query = Profile.find({ username: username });
+    query.exec(function (err, profile) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!profile || profile.length === 0) {
+            return res.status(401).send('The user does not exist');
+        }
+        let phone = profile[0].phone;
+        let msg = { username: username, phone: phone };
+        res.status(200).send(msg);
+    });
+}
+
+const putPhone = (req, res) => {
+    let username = req.user.username;
+    let phone = req.body.phone;
+    if (!phone) {
+        return res.state(400).send('Phone is missing');
+    }
+    Profile.findOneAndUpdate(
+        { username: username },
+        { $set: { phone: phone } },
+        { new: true, upsert: true },
+        function (err, profile) {
+            if (err) {
+                return console.error(err);
+            }
+            let msg = { username: username, phone: profile.phone };
+            res.status(200).send(msg);
+        });
+}
+
 const getAvatar = (req, res) => {
     let username = req.params.user ? req.params.user : req.user.username;
     const query = Profile.find({ username: username });
@@ -166,6 +201,8 @@ module.exports = (app) => {
     app.get('/dob/:user?', getDob);
     app.get('/zipcode/:user?', getZipcode);
     app.put('/zipcode', putZipcode);
+    app.get('/phone/:user?', getPhone);
+    app.put('/phone', putPhone);
     app.get('/avatar/:user?', getAvatar);
     app.put('/avatar', uploadImage('avatar'), putAvatar);
 }
