@@ -1,5 +1,10 @@
 const md5 = require('md5');
 const cookieParser = require('cookie-parser');
+// const redis = require('redis').createClient('redis://h:pd4d2fe14cd32c8be1c2f67a2e58aab33de6a860ee73395f609cc45e3a7479d08@ec2-3-211-169-9.compute-1.amazonaws.com:8679');
+const session = require('express-session');
+const passport = require('passport');
+const FacebookStrategy = require('passport-facebook').Strategy;
+
 const User = require('./Schema').User;
 const Profile = require('./Schema').Profile;
 
@@ -8,16 +13,56 @@ const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
+// 3rd Party
+// app.use(session({
+//     secret: mySecretMessage,
+//     resave: true,
+//     saveUninitialized: true
+// }));
+
+// app.use(passport.initialize());
+// app.use(passport.session());
+
+// passport.serializeUser(function (user, done) {
+//     done(null, user);
+// });
+
+// passport.deserializeUser(function (user, done) {
+//     done(null, user);
+// });
+
+// passport.use(new FacebookStrategy({
+//     clientID: '1004131556774775',
+//     clientSecret: 'f3045edcd4dd7bc7b2fa8d93233acb21',
+//     callbackURL: "https://localhost:3000/auth/facebook/callback"
+// },
+//     function (accessToken, refreshToken, profile, done) {
+//         let user = {
+//             'id': profile.id,
+//             'token': accessToken
+//         };
+//         return done(null, profile);
+//     })
+// );
+
+// app.get('/auth/facebook', passport.authenticate('facebook'));
+
+// app.get('/auth/facebook/callback',
+//     passport.authenticate('facebook', {
+//         successRedirect: 'https://localhost:3000/main',
+//         failureRedirect: '/'
+//     }));
+
 const getHash = (salt, password) => {
     return md5(salt + password);
 }
 
 const isLoggedIn = (req, res, next) => {
-    let id = req.cookies[cookieKey];
-    if (!id) {
+    let sid = req.cookies[cookieKey];
+    if (!sid) {
         return res.status(401).send('No session key for cookie key');
     }
-    let user = sessionUser[id];
+    let user = sessionUser[sid];
     if (user) {
         req.user = user;
         next();
@@ -25,6 +70,18 @@ const isLoggedIn = (req, res, next) => {
     else {
         return res.status(401).send('No user login!');
     }
+    // redis.hgetall(sid, function (err, userObj) {
+    //     if (err) {
+    //         throw err;
+    //     }
+    //     if (userObj) {
+    //         req.user = userObj
+    //         next()
+    //     }
+    //     else {
+    //         return res.status(401).send('No user login!');
+    //     }
+    // })
 }
 
 const register = (req, res) => {
@@ -84,6 +141,7 @@ const login = (req, res) => {
         if (hash === userObj.hash) {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
+            // redis.hmset(sessionKey, userObj)
             res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
             // , sameSite: 'None', secure: true
             // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true })

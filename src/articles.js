@@ -100,21 +100,30 @@ const putArticles = (req, res) => {
         }
         else {
             if (cid === -1) {
-                new Comment({ author: username, date: new Date(), content: text }).save(function (err, comment) {
-                    comment.setNext('id', function (err, comment) {
-                        if (err) {
-                            return console.error('Cannot increment the id');
-                        }
-                        Article.findOneAndUpdate(
-                            { pid: id },
-                            { $push: { comments: comment } },
-                            { new: true, upsert: true },
-                            function (err1, articles) {
-                                if (err1) {
-                                    return console.error(err1);
-                                }
-                                findall(res, username);
-                            });
+                Profile.find({ username: username }, function (err, profile) {
+                    if (err) {
+                        return console.error(err);
+                    }
+                    if (!profile || profile.length === 0) {
+                        return res.status(401).send('The user does not exist');
+                    }
+                    let avatar = profile[0].avatar;
+                    new Comment({ author: username, avatar: avatar, date: new Date(), content: text }).save(function (err, comment) {
+                        comment.setNext('id', function (err, comment) {
+                            if (err) {
+                                return console.error('Cannot increment the id');
+                            }
+                            Article.findOneAndUpdate(
+                                { pid: id },
+                                { $push: { comments: comment } },
+                                { new: true, upsert: true },
+                                function (err1, articles) {
+                                    if (err1) {
+                                        return console.error(err1);
+                                    }
+                                    findall(res, username);
+                                });
+                        });
                     });
                 });
             }
@@ -154,27 +163,36 @@ const addArticle = (req, res) => {
     if (!text) {
         return res.state(400).send('Article is missing');
     }
-    new Article({ author: username, date: new Date(), text: text }).save(function (err, post) {
+    Profile.find({ username: username }, function (err, profile) {
         if (err) {
             return console.error(err);
         }
-        post.setNext('pid', function (err, post) {
+        if (!profile || profile.length === 0) {
+            return res.status(401).send('The user does not exist');
+        }
+        let avatar = profile[0].avatar;
+        new Article({ author: username, avatar: avatar, date: new Date(), text: text }).save(function (err, post) {
             if (err) {
-                return console.error('Cannot increment the pid');
+                return console.error(err);
             }
-            else {
-                const query = Article.find({ author: username });
-                query.exec(function (err1, article) {
-                    if (err1) {
-                        return console.error(err1);
-                    }
-                    if (!article || article.length === 0) {
-                        return res.status(401).send('The author does not exist');
-                    }
-                    let msg = { articles: article };
-                    return res.status(200).send(msg);
-                });
-            }
+            post.setNext('pid', function (err, post) {
+                if (err) {
+                    return console.error('Cannot increment the pid');
+                }
+                else {
+                    const query = Article.find({ author: username });
+                    query.exec(function (err1, article) {
+                        if (err1) {
+                            return console.error(err1);
+                        }
+                        if (!article || article.length === 0) {
+                            return res.status(401).send('The author does not exist');
+                        }
+                        let msg = { articles: article };
+                        return res.status(200).send(msg);
+                    });
+                }
+            });
         });
     });
 }

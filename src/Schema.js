@@ -59,6 +59,9 @@ const commentSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Author is required']
     },
+    avatar: {
+        type: String
+    },
     date: {
         type: Date,
         required: [true, 'Date of birth is required']
@@ -78,6 +81,9 @@ const articleSchema = new mongoose.Schema({
     author: {
         type: String,
         required: [true, 'Author is required']
+    },
+    avatar: {
+        type: String
     },
     date: {
         type: Date,
