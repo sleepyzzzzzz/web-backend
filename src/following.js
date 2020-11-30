@@ -26,36 +26,44 @@ const putFollowing = (req, res) => {
     if (new_follow === username) {
         return res.status(401).send('Cannot follow yourself');
     }
-    const query = Profile.find({ username: username });
-    query.exec(function (err, profile) {
+    const query = Profile.find({ username: new_follow });
+    query.find({ username: new_follow }).exec(function (err, user) {
         if (err) {
             return console.error(err);
         }
-        if (!profile || profile.length === 0) {
+        if (!user || user.length === 0) {
             return res.status(401).send('The user does not exist');
         }
-        let exist = false;
-        let following = profile[0].following;
-        for (let i = 0; i < following.length; i++) {
-            if (new_follow === following[i]) {
-                exist = true;
-                break;
+        Profile.find({ username: username }).exec(function (err, profile) {
+            if (err) {
+                return console.error(err);
             }
-        }
-        if (exist) {
-            return res.status(401).send('You have already followed this user');
-        }
-        Profile.findOneAndUpdate(
-            { username: username },
-            { $addToSet: { following: new_follow } },
-            { new: true, upsert: true },
-            function (err, profile) {
-                if (err) {
-                    return console.error(err);
+            if (!profile || profile.length === 0) {
+                return res.status(401).send('The user does not exist');
+            }
+            let exist = false;
+            let following = profile[0].following;
+            for (let i = 0; i < following.length; i++) {
+                if (new_follow === following[i]) {
+                    exist = true;
+                    break;
                 }
-                let msg = { username: username, following: profile.following };
-                res.status(200).send(msg);
-            });
+            }
+            if (exist) {
+                return res.status(401).send('You have already followed this user');
+            }
+            Profile.findOneAndUpdate(
+                { username: username },
+                { $addToSet: { following: new_follow } },
+                { new: true, upsert: true },
+                function (err, profile) {
+                    if (err) {
+                        return console.error(err);
+                    }
+                    let msg = { username: username, following: profile.following };
+                    res.status(200).send(msg);
+                });
+        });
     });
 }
 
