@@ -193,6 +193,19 @@ const putAvatar = (req, res) => {
         });
 }
 
+const getUsers = (req, res) => {
+    Profile.find({}, ['username'], function (err, users) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!users || users.length === 0) {
+            return res.status(400).send('No user registered');
+        }
+        let msg = { users: users };
+        res.status(200).send(msg);
+    })
+}
+
 module.exports = (app) => {
     app.get('/headline/:user?', getHeadline);
     app.put('/headline', putHeadline);
@@ -205,4 +218,5 @@ module.exports = (app) => {
     app.put('/phone', putPhone);
     app.get('/avatar/:user?', getAvatar);
     app.put('/avatar', uploadImage('avatar'), putAvatar);
+    app.get('/users', getUsers);
 }

@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-const connectionString = 'mongodb+srv://dbccc:1711@ctest.s3vxw.mongodb.net/Social?retryWrites=true&w=majority';
+const connectionString = 'mongodb+srv://dbccc:1711@ctest.s3vxw.mongodb.net/Testing?retryWrites=true&w=majority';
 const corsOptions = { origin: 'http://localhost:8080', credentials: true, methods: "GET, POST, PUT, DELETE" };
 // const corsOptions = { origin: 'https://yz166-hw6-frontend.surge.sh', credentials: true, methods: "GET, POST, PUT, DELETE" };
 
@@ -22,6 +22,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
 auth(app);
 profile(app);
 following(app);
