@@ -142,8 +142,8 @@ const login = (req, res) => {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
             // redis.hmset(sessionKey, userObj)
-            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
             let msg = { username: username, result: 'success' };
             res.status(200).send(msg);
         }
@@ -151,6 +151,26 @@ const login = (req, res) => {
             return res.status(401).send('Password is incorrect');
         }
     });
+}
+
+
+const addPhone = (req, res) => {
+    let username = req.body.username;
+    let phone = req.body.phone;
+    if (!phone) {
+        return res.state(400).send('Phone is missing');
+    }
+    Profile.findOneAndUpdate(
+        { username: username },
+        { $set: { phone: phone } },
+        { new: true, upsert: true },
+        function (err, profile) {
+            if (err) {
+                return console.error(err);
+            }
+            let msg = { username: username, phone: profile.phone };
+            res.status(200).send(msg);
+        });
 }
 
 const logout = (req, res) => {
@@ -187,6 +207,7 @@ module.exports = (app) => {
     app.use(cookieParser());
     app.post('/register', register);
     app.post('/login', login);
+    app.post('/phone', addPhone);
     app.use(isLoggedIn);
     app.put('/logout', logout);
     app.put('/password', putPassword);

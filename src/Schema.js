@@ -35,6 +35,9 @@ const userprofileSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Zipcode is required']
     },
+    phone: {
+        type: String
+    },
     headline: {
         type: String,
         default: "This is my headline!"
