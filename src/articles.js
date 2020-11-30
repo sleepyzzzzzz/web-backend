@@ -180,17 +180,7 @@ const addArticle = (req, res) => {
                     return console.error('Cannot increment the pid');
                 }
                 else {
-                    const query = Article.find({ author: username });
-                    query.exec(function (err1, article) {
-                        if (err1) {
-                            return console.error(err1);
-                        }
-                        if (!article || article.length === 0) {
-                            return res.status(401).send('The author does not exist');
-                        }
-                        let msg = { articles: article };
-                        return res.status(200).send(msg);
-                    });
+                    findall(res, username);
                 }
             });
         });
