@@ -194,7 +194,7 @@ const putAvatar = (req, res) => {
 }
 
 const getUsers = (req, res) => {
-    Profile.find({}, ['username'], function (err, users) {
+    Profile.find({}, ['username', 'avatar'], function (err, users) {
         if (err) {
             return console.error(err);
         }
