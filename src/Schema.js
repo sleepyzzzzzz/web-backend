@@ -23,6 +23,9 @@ const userprofileSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Username is required']
     },
+    displayname: {
+        type: String
+    },
     email: {
         type: String,
         required: [true, 'Email is required']

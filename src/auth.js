@@ -86,9 +86,11 @@ const isLoggedIn = (req, res, next) => {
 
 const register = (req, res) => {
     let username = req.body.username;
+    let displayname = req.body.displayname;
     let email = req.body.email;
     let dob = req.body.dob;
     let zipcode = req.body.zipcode;
+    let phone = req.body.phone;
     let password = req.body.password;
 
     if (!username || !email || !dob || !zipcode || !password) {
@@ -109,7 +111,7 @@ const register = (req, res) => {
                     return console.error(err);
                 }
             });
-            new Profile({ username, email, dob, zipcode }).save(function (err) {
+            new Profile({ username, displayname, email, dob, zipcode, phone }).save(function (err) {
                 if (err) {
                     return console.error(err);
                 }
@@ -153,26 +155,6 @@ const login = (req, res) => {
     });
 }
 
-
-const addPhone = (req, res) => {
-    let username = req.body.username;
-    let phone = req.body.phone;
-    if (!phone) {
-        return res.state(400).send('Phone is missing');
-    }
-    Profile.findOneAndUpdate(
-        { username: username },
-        { $set: { phone: phone } },
-        { new: true, upsert: true },
-        function (err, profile) {
-            if (err) {
-                return console.error(err);
-            }
-            let msg = { username: username, phone: profile.phone };
-            res.status(200).send(msg);
-        });
-}
-
 const logout = (req, res) => {
     userObj = {};
     sessionUser = {};
@@ -207,7 +189,6 @@ module.exports = (app) => {
     app.use(cookieParser());
     app.post('/register', register);
     app.post('/login', login);
-    app.post('/phone', addPhone);
     app.use(isLoggedIn);
     app.put('/logout', logout);
     app.put('/password', putPassword);
