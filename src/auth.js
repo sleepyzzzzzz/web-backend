@@ -3,7 +3,7 @@ const cookieParser = require('cookie-parser');
 // const redis = require('redis').createClient('redis://h:pd4d2fe14cd32c8be1c2f67a2e58aab33de6a860ee73395f609cc45e3a7479d08@ec2-3-211-169-9.compute-1.amazonaws.com:8679');
 const session = require('express-session');
 const passport = require('passport');
-const FacebookStrategy = require('passport-facebook').Strategy;
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const User = require('./Schema').User;
 const Profile = require('./Schema').Profile;
@@ -13,45 +13,6 @@ const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
-// 3rd Party
-// app.use(session({
-//     secret: mySecretMessage,
-//     resave: true,
-//     saveUninitialized: true
-// }));
-
-// app.use(passport.initialize());
-// app.use(passport.session());
-
-// passport.serializeUser(function (user, done) {
-//     done(null, user);
-// });
-
-// passport.deserializeUser(function (user, done) {
-//     done(null, user);
-// });
-
-// passport.use(new FacebookStrategy({
-//     clientID: '1004131556774775',
-//     clientSecret: 'f3045edcd4dd7bc7b2fa8d93233acb21',
-//     callbackURL: "https://localhost:3000/auth/facebook/callback"
-// },
-//     function (accessToken, refreshToken, profile, done) {
-//         let user = {
-//             'id': profile.id,
-//             'token': accessToken
-//         };
-//         return done(null, profile);
-//     })
-// );
-
-// app.get('/auth/facebook', passport.authenticate('facebook'));
-
-// app.get('/auth/facebook/callback',
-//     passport.authenticate('facebook', {
-//         successRedirect: 'https://localhost:3000/main',
-//         failureRedirect: '/'
-//     }));
 
 const getHash = (salt, password) => {
     return md5(salt + password);
@@ -133,7 +94,7 @@ const login = (req, res) => {
     const query = User.find({ username: username });
     query.exec(function (err, user) {
         if (err) {
-            return hanldleError(err);
+            return console.error(err);
         }
         if (!user || user.length === 0) {
             return res.status(401).send('This user has not registered');
@@ -154,6 +115,34 @@ const login = (req, res) => {
         }
     });
 }
+
+// 3rd Party===================================================================
+passport.serializeUser(function (user, done) {
+    done(null, user);
+});
+
+passport.deserializeUser(function (user, done) {
+    // User.findById(id, function (err, user) {
+    //     done(null, user);
+    // })
+    done(null, user);
+});
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+},
+    function (accessToken, refreshToken, profile, done) {
+        // User.findOrCreate({ googleId: profile.id }, function (err, user) {
+        //     return cb(err, user);
+        // });
+        console.log('profile');
+        console.log(profile);
+        return done(null, profile);
+    }
+));
+// ==============================================================================
 
 const logout = (req, res) => {
     userObj = {};
@@ -187,6 +176,25 @@ const putPassword = (req, res) => {
 
 module.exports = (app) => {
     app.use(cookieParser());
+    app.use(session({
+        secret: mySecretMessage,
+        resave: true,
+        saveUninitialized: true
+    }));
+    app.use(passport.initialize());
+    app.use(passport.session());
+    app.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }),
+        function (req, res) {
+            console.log(req);
+            console.log(res);
+        });
+
+    app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }),
+        function (req, res) {
+            res.redirect('/');
+        });
+
+
     app.post('/register', register);
     app.post('/login', login);
     app.use(isLoggedIn);

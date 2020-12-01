@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
 const connectionString = 'mongodb+srv://dbccc:1711@ctest.s3vxw.mongodb.net/Testing?retryWrites=true&w=majority';
 const corsOptions = { origin: 'http://localhost:8080', credentials: true, methods: "GET, POST, PUT, DELETE" };
@@ -19,9 +20,9 @@ mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: 
 });
 
 const app = express();
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(cors(corsOptions));
 
 auth(app);
 profile(app);
