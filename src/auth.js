@@ -185,8 +185,6 @@ module.exports = (app) => {
     app.use(passport.session());
     app.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }),
         function (req, res) {
-            console.log(req);
-            console.log(res);
         });
 
     app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }),
