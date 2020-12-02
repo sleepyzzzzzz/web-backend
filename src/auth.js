@@ -1,6 +1,6 @@
 const md5 = require('md5');
 const cookieParser = require('cookie-parser');
-// const redis = require('redis').createClient('redis://h:pd4d2fe14cd32c8be1c2f67a2e58aab33de6a860ee73395f609cc45e3a7479d08@ec2-3-211-169-9.compute-1.amazonaws.com:8679');
+const redis = require('redis').createClient(process.env.REDIS_URI);
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;

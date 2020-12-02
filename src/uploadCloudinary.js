@@ -1,11 +1,11 @@
 const multer = require('multer')
 const stream = require('stream')
 const cloudinary = require('cloudinary')
-const CLOUDINARY_URL = "cloudinary://775497117339581:Kv1FwQqrkM0OGxpT8r4Eewwo6Rg@hrjpmneev";
+const CLOUDINARY_URL = process.env.CLOUDINARY_URL;
 cloudinary.config({
-	cloud_name: 'hrjpmneev',
-	api_key: '775497117339581',
-	api_secret: 'Kv1FwQqrkM0OGxpT8r4Eewwo6Rg'
+	cloud_name: process.env.CLOUD_NAME,
+	api_key: process.env.API_KEY,
+	api_secret: process.env.API_SECRET
 });
 
 if (!process.env.CLOUDINARY_URL) {
