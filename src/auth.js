@@ -118,14 +118,13 @@ const login = (req, res) => {
 
 // 3rd Party===================================================================
 passport.serializeUser(function (user, done) {
-    done(null, user);
+    done(null, user.id);
 });
 
 passport.deserializeUser(function (user, done) {
-    // User.findById(id, function (err, user) {
-    //     done(null, user);
-    // })
-    done(null, user);
+    User.findById(id, function (err, user) {
+        done(null, user);
+    })
 });
 
 passport.use(new GoogleStrategy({
@@ -134,12 +133,34 @@ passport.use(new GoogleStrategy({
     callbackURL: process.env.GOOGLE_CALLBACK_URL
 },
     function (accessToken, refreshToken, profile, done) {
-        // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-        //     return cb(err, user);
-        // });
-        console.log('profile');
-        console.log(profile);
-        return done(null, profile);
+        let username = profile.username;
+        // User.findOne({ username: username }).exec(function (err, user) {
+        //     if (err) {
+        //         return console.error(err);
+        //     }
+        //     if (!user || user.length === 0) {
+        //         new User({ id: profile.id, username: username }).save(function (err) {
+        //             if (err) {
+        //                 return console.log(err)
+        //             }
+        //         })
+        //         let displayname = profile.displayName;
+        //         let email = profile.email;
+        //         let dob = new Date();
+        //         let zipcode = null;
+        //         new Profile({ username, displayname, email, dob, zipcode }).save(function (err) {
+        //             if (err) {
+        //                 return console.error(err);
+        //             }
+        //         });
+        //     }
+        //     return done(null, profile)
+        // })
+        // console.log('profile');
+        // console.log(profile);
+        // return done(null, profile);
+        userProfile = profile;
+        return done(null, userProfile);
     }
 ));
 // ==============================================================================
@@ -189,9 +210,9 @@ module.exports = (app) => {
 
     app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }),
         function (req, res) {
-            res.redirect('/');
+            res.redirect('/success');
         });
-
+    app.get('/success', (req, res) => res.send(userProfile));
 
     app.post('/register', register);
     app.post('/login', login);

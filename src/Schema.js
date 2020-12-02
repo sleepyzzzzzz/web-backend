@@ -39,7 +39,8 @@ const userprofileSchema = new mongoose.Schema({
         required: [true, 'Zipcode is required']
     },
     phone: {
-        type: String
+        type: String,
+        default: ''
     },
     headline: {
         type: String,
@@ -47,7 +48,7 @@ const userprofileSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        default: ""
+        default: ''
     },
     following: {
         type: [String],
