@@ -1,6 +1,7 @@
 const Article = require('./Schema').Article;
 const Comment = require('./Schema').Comment;
 const Profile = require('./Schema').Profile;
+const uploadImage = require('./uploadCloudinary');
 
 const findbyUsername = (res, id) => {
     Article.find({ author: id }, function (err, article) {
@@ -159,7 +160,8 @@ const putArticles = (req, res) => {
 
 const addArticle = (req, res) => {
     let username = req.user.username;
-    let text = req.body.text;
+    let text = req.text;
+    let image = req.fileurl;
     if (!text) {
         return res.state(400).send('Article is missing');
     }
@@ -171,7 +173,7 @@ const addArticle = (req, res) => {
             return res.status(401).send('The user does not exist');
         }
         let avatar = profile[0].avatar;
-        new Article({ author: username, avatar: avatar, date: new Date(), text: text }).save(function (err, post) {
+        new Article({ author: username, avatar: avatar, date: new Date(), text: text, images: image }).save(function (err, post) {
             if (err) {
                 return console.error(err);
             }
@@ -222,6 +224,6 @@ const filterArticles = (req, res) => {
 module.exports = (app) => {
     app.get('/articles/:id?', getArticles);
     app.put('/articles/:id', putArticles);
-    app.post('/article', addArticle);
+    app.post('/article', uploadImage('title'), addArticle);
     app.get('/article/:id', filterArticles);
 }

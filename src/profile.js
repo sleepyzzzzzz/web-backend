@@ -1,6 +1,6 @@
 const User = require('./Schema').User;
 const Profile = require('./Schema').Profile;
-const uploadImage = require('./uploadCloudinary')
+const uploadImage = require('./uploadCloudinary');
 
 const getHeadline = (req, res) => {
     let username = req.params.user ? req.params.user : req.user.username;

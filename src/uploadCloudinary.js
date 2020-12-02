@@ -25,9 +25,22 @@ const doUpload = (publicId, req, res, next) => {
 	s.on('end', uploadStream.end)
 }
 
-const uploadImage = (publicId) => (req, res, next) =>
-	multer().single('image')(req, res, () =>
-		doUpload(publicId, req, res, next))
+const uploadImage = (publicId) => (req, res, next) => {
+	multer().single('image')(req, res, () => {
+		if (!req.body.text) {
+			req.text = null;
+		}
+		else if (!req.body.text) {
+			req.text = '';
+		}
+		else {
+			console.log(req.body.text)
+			req.text = req.body.text[0];
+		}
+		doUpload(publicId, req, res, next)
+	})
+}
+
 
 
 module.exports = uploadImage;
