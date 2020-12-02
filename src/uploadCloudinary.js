@@ -27,9 +27,10 @@ const doUpload = (publicId, req, res, next) => {
 
 const uploadImage = (publicId) => (req, res, next) => {
 	multer().single('text')(req, res, () => {
+		console.log(req.body.text)
 		if (!req.body.text) {
 			req.text = null;
-		} else if (!req.body.text[0] || req.body.text[0] == 'undefined') {
+		} else if (!req.body.text[0]) {
 			req.text = ''
 		} else {
 			req.text = req.body.text[0];
@@ -37,7 +38,7 @@ const uploadImage = (publicId) => (req, res, next) => {
 	})
 
 	multer().single('image')(req, res, () => {
-		if (req.file === undefined) {
+		if (!req.file) {
 			req.file = null;
 			next()
 		}
