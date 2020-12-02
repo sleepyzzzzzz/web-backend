@@ -159,7 +159,7 @@ passport.use(new GoogleStrategy({
         // console.log('profile');
         // console.log(profile);
         // return done(null, profile);
-        userProfile = profile;
+        let userProfile = profile;
         return done(null, userProfile);
     }
 ));
