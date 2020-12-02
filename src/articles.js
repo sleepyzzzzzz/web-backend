@@ -13,7 +13,7 @@ const findbyUsername = (res, id) => {
         }
         let msg = { articles: article };
         return res.status(200).send(msg);
-    }).limit(10);
+    }).sort({ date: -1 }).limit(10);
 }
 
 const findall = (res, username) => {
@@ -36,7 +36,7 @@ const findall = (res, username) => {
                 let msg = { articles: article };
                 res.status(200).send(msg);
             }
-        }).limit(10);
+        }).sort({ date: -1 }).limit(10);
     });
 }
 
@@ -217,7 +217,7 @@ const filterArticles = (req, res) => {
                 let msg = { articles: articles };
                 return res.status(200).send(msg);
             }
-        }).limit(10);
+        }).sort({ date: -1 }).limit(10);
     });
 }
 
