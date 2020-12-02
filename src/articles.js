@@ -187,8 +187,41 @@ const addArticle = (req, res) => {
     });
 }
 
+const filterArticles = (req, res) => {
+    let username = req.user.username;
+    let id = req.params.id;
+    Profile.find({ username: username }, function (err, profile) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!profile || profile.length === 0) {
+            return res.status(401).send('The user does not exist');
+        }
+        let follow = profile[0].following;
+        let all = [];
+        follow.forEach(user => all.push(user));
+        all.push(username);
+        Article.find({ author: { $in: all } }, function (err1, article) {
+            if (err1) {
+                return console.error(err1);
+            }
+            if (article) {
+                let articles = [];
+                for (let i = 0; i < article.length; i++) {
+                    if (article[i].author === id || article[i].text.includes(id)) {
+                        articles.push(article[i]);
+                    }
+                }
+                let msg = { articles: articles };
+                return res.status(200).send(msg);
+            }
+        }).limit(10);
+    });
+}
+
 module.exports = (app) => {
     app.get('/articles/:id?', getArticles);
     app.put('/articles/:id', putArticles);
     app.post('/article', addArticle);
+    app.get('/article/:id', filterArticles);
 }
