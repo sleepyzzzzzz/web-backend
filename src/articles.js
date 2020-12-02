@@ -224,6 +224,6 @@ const filterArticles = (req, res) => {
 module.exports = (app) => {
     app.get('/articles/:id?', getArticles);
     app.put('/articles/:id', putArticles);
-    app.post('/article', uploadImage('title'), addArticle);
+    app.post('/article', uploadImage('posts'), addArticle);
     app.get('/article/:id', filterArticles);
 }

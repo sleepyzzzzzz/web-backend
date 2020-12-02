@@ -217,6 +217,6 @@ module.exports = (app) => {
     app.get('/phone/:user?', getPhone);
     app.put('/phone', putPhone);
     app.get('/avatar/:user?', getAvatar);
-    app.put('/avatar', uploadImage('title'), putAvatar);
+    app.put('/avatar', uploadImage('avatars'), putAvatar);
     app.get('/users', getUsers);
 }

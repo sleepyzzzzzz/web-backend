@@ -26,22 +26,25 @@ const doUpload = (publicId, req, res, next) => {
 }
 
 const uploadImage = (publicId) => (req, res, next) => {
-	multer().single('image')(req, res, () => {
+	multer().single('text')(req, res, () => {
 		if (!req.body.text) {
 			req.text = null;
-		}
-		else if (!req.body.text) {
-			req.text = '';
-		}
-		else {
-			console.log(req.body.text)
+		} else if (!req.body.text[0] || req.body.text[0] == 'undefined') {
+			req.text = ''
+		} else {
 			req.text = req.body.text[0];
 		}
-		doUpload(publicId, req, res, next)
+	})
+
+	multer().single('image')(req, res, () => {
+		if (req.file === undefined) {
+			req.file = null;
+			next()
+		}
+		else {
+			doUpload(publicId, req, res, next)
+		}
 	})
 }
 
-
-
 module.exports = uploadImage;
-
