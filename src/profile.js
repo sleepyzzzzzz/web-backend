@@ -1,5 +1,6 @@
 const User = require('./Schema').User;
 const Profile = require('./Schema').Profile;
+const Article = require('./Schema').Article;
 const uploadImage = require('./uploadCloudinary');
 
 const getHeadline = (req, res) => {
@@ -188,6 +189,13 @@ const putAvatar = (req, res) => {
             if (err) {
                 return console.error(err);
             }
+            Article.updateMany(
+                { author: username },
+                { $set: { avatar: avatar } },
+                { new: true, upsert: true },
+                function (err, article) {
+                }
+            );
             let msg = { username: username, avatar: profile.avatar };
             res.status(200).send(msg);
         });

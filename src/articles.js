@@ -13,7 +13,7 @@ const findbyUsername = (res, id) => {
         }
         let msg = { articles: article };
         return res.status(200).send(msg);
-    }).sort({ date: -1 }).limit(10);
+    }).sort({ date: -1 });
 }
 
 const findall = (res, username) => {
@@ -36,7 +36,7 @@ const findall = (res, username) => {
                 let msg = { articles: article };
                 res.status(200).send(msg);
             }
-        }).sort({ date: -1 }).limit(10);
+        }).sort({ date: -1 });
     });
 }
 
@@ -112,7 +112,7 @@ const putArticles = (req, res) => {
                     new Comment({ author: username, avatar: avatar, date: new Date(), content: text }).save(function (err, comment) {
                         comment.setNext('id', function (err, comment) {
                             if (err) {
-                                return console.error('Cannot increment the id');
+                                return console.error(err);
                             }
                             Article.findOneAndUpdate(
                                 { pid: id },
@@ -179,7 +179,7 @@ const addArticle = (req, res) => {
             }
             post.setNext('pid', function (err, post) {
                 if (err) {
-                    return console.error('Cannot increment the pid');
+                    return console.error(err);
                 }
                 else {
                     findall(res, username);
@@ -217,7 +217,7 @@ const filterArticles = (req, res) => {
                 let msg = { articles: articles };
                 return res.status(200).send(msg);
             }
-        }).sort({ date: -1 }).limit(10);
+        }).sort({ date: -1 });
     });
 }
 

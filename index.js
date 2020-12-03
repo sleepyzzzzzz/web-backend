@@ -16,7 +16,7 @@ const article = require('./src/articles');
 
 mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }).then(con => {
 }).catch(err => {
-    console.error(err);
+    return console.error(err);
 });
 
 const app = express();
