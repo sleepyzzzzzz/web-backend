@@ -162,45 +162,47 @@ const success = (req, res) => {
         if (err) {
             return console.error(err);
         }
-        if (!user || user.length === 0) {
-            let displayname = profile.displayname;
-            let email = profile.emails[0].value;
-            let dob = new Date(1997, 12, 24);
-            let zipcode = 77251;
-            let avatar = profile.photos[0].value;
-            new Profile({
-                username: username,
-                displayname: displayname,
-                email: email,
-                dob: dob,
-                zipcode: zipcode,
-                avatar: avatar
-            }).save(function (err) {
-                if (err) {
-                    return console.error(err);
-                }
+        generate_session(res, user[0], username);
+        res.redirect(client + '/main');
+        // if (!user || user.length === 0) {
+        //     let displayname = profile.displayname;
+        //     let email = profile.emails[0].value;
+        //     let dob = new Date(1997, 12, 24);
+        //     let zipcode = 77251;
+        //     let avatar = profile.photos[0].value;
+        //     new Profile({
+        //         username: username,
+        //         displayname: displayname,
+        //         email: email,
+        //         dob: dob,
+        //         zipcode: zipcode,
+        //         avatar: avatar
+        //     }).save(function (err) {
+        //         if (err) {
+        //             return console.error(err);
+        //         }
 
-            });
-            let password = sub_pwd;
-            let salt = username + new Date().getTime();
-            let hash = getHash(salt, password);
-            let provider = profile.provider;
-            let third_party = [{ id: googleId, provider: provider }];
-            new User({
-                username: username,
-                salt: salt,
-                hash: hash,
-                googleId: googleId,
-                third_party: third_party
-            }).save().then((newUser) => {
-                generate_session(res, newUser, username);
-                res.redirect(client + '/main');
-            });
-        }
-        else {
-            generate_session(res, user[0], username);
-            res.redirect(client + '/main');
-        }
+        //     });
+        //     let password = sub_pwd;
+        //     let salt = username + new Date().getTime();
+        //     let hash = getHash(salt, password);
+        //     let provider = profile.provider;
+        //     let third_party = [{ id: googleId, provider: provider }];
+        //     new User({
+        //         username: username,
+        //         salt: salt,
+        //         hash: hash,
+        //         googleId: googleId,
+        //         third_party: third_party
+        //     }).save().then((newUser) => {
+        //         generate_session(res, newUser, username);
+        //         res.redirect(client + '/main');
+        //     });
+        // }
+        // else {
+        //     generate_session(res, user[0], username);
+        //     res.redirect(client + '/main');
+        // }
     });
 }
 // ==============================================================================
