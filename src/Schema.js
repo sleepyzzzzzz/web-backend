@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
+const Third = new mongoose.Schema({
+    id: {
+        type: String,
+        default: ''
+    },
+    provider: {
+        type: String,
+        default: ''
+    }
+})
+
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
@@ -13,6 +24,14 @@ const userSchema = new mongoose.Schema({
     hash: {
         type: String,
         required: [true, 'Created hash is required']
+    },
+    authId: {
+        type: String,
+        default: ''
+    },
+    third_party: {
+        type: [Third],
+        default: []
     }
 }, { autoIndex: true });
 

@@ -27,17 +27,17 @@ const doUpload = (publicId, req, res, next) => {
 
 const uploadImage = (publicId) => (req, res, next) => {
 	multer().single('text')(req, res, () => {
-		if (!req.body.text) {
+		if (req.body.text === undefined) {
 			req.text = null;
-		} else if (!req.body.text[0]) {
-			req.text = ''
+		} else if (!req.body.text[0] || req.body.text[0] === 'undefined') {
+			req.text = '';
 		} else {
 			req.text = req.body.text[0];
 		}
 	})
 
 	multer().single('image')(req, res, () => {
-		if (!req.file) {
+		if (req.file === undefined) {
 			req.file = null;
 			next()
 		}
