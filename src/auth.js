@@ -28,7 +28,7 @@ const getHash = (salt, password) => {
 const generate_session = (res, user, username) => {
     let sessionKey = md5(mySecretMessage + new Date().getTime() + username);
     sessionUser[sessionKey] = user;
-    redis.hmset(sessionKey, user);
+    // redis.hmset(sessionKey, user);
     res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
     // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
 }
@@ -38,26 +38,26 @@ const isLoggedIn = (req, res, next) => {
     if (!sid) {
         return res.status(401).send('No session key for cookie key. Please login');
     }
-    // let user = sessionUser[sid];
-    // if (user) {
-    //     req.user = user;
-    //     next();
-    // }
-    // else {
-    //     return res.status(401).send('No user login!');
-    // }
-    redis.hgetall(sid, function (err, user) {
-        if (err) {
-            throw err;
-        }
-        if (user) {
-            req.user = user
-            next()
-        }
-        else {
-            return res.status(401).send('No user login!');
-        }
-    })
+    let user = sessionUser[sid];
+    if (user) {
+        req.user = user;
+        next();
+    }
+    else {
+        return res.status(401).send('No user login!');
+    }
+    // redis.hgetall(sid, function (err, user) {
+    //     if (err) {
+    //         throw err;
+    //     }
+    //     if (user) {
+    //         req.user = user
+    //         next()
+    //     }
+    //     else {
+    //         return res.status(401).send('No user login!');
+    //     }
+    // })
 }
 
 const register = (req, res) => {
@@ -162,47 +162,45 @@ const success = (req, res) => {
         if (err) {
             return console.error(err);
         }
-        generate_session(res, user[0], username);
-        res.redirect(client + '/main');
-        // if (!user || user.length === 0) {
-        //     let displayname = profile.displayname;
-        //     let email = profile.emails[0].value;
-        //     let dob = new Date(1997, 12, 24);
-        //     let zipcode = 77251;
-        //     let avatar = profile.photos[0].value;
-        //     new Profile({
-        //         username: username,
-        //         displayname: displayname,
-        //         email: email,
-        //         dob: dob,
-        //         zipcode: zipcode,
-        //         avatar: avatar
-        //     }).save(function (err) {
-        //         if (err) {
-        //             return console.error(err);
-        //         }
+        if (!user || user.length === 0) {
+            let displayname = profile.displayname;
+            let email = profile.emails[0].value;
+            let dob = new Date(1997, 12, 24);
+            let zipcode = 77251;
+            let avatar = profile.photos[0].value;
+            new Profile({
+                username: username,
+                displayname: displayname,
+                email: email,
+                dob: dob,
+                zipcode: zipcode,
+                avatar: avatar
+            }).save(function (err) {
+                if (err) {
+                    return console.error(err);
+                }
 
-        //     });
-        //     let password = sub_pwd;
-        //     let salt = username + new Date().getTime();
-        //     let hash = getHash(salt, password);
-        //     let provider = profile.provider;
-        //     let third_party = [{ id: googleId, provider: provider }];
-        //     new User({
-        //         username: username,
-        //         salt: salt,
-        //         hash: hash,
-        //         googleId: googleId,
-        //         third_party: third_party
-        //     }).save().then((newUser) => {
-        //         generate_session(res, newUser, username);
-        //         res.redirect(client + '/main');
-        //     });
-        // }
-        // else {
-        //     generate_session(res, user[0], username);
-        //     res.redirect(client + '/main');
-        // }
+            });
+            let password = sub_pwd;
+            let salt = username + new Date().getTime();
+            let hash = getHash(salt, password);
+            let provider = profile.provider;
+            let third_party = [{ id: googleId, provider: provider }];
+            new User({
+                username: username,
+                salt: salt,
+                hash: hash,
+                googleId: googleId,
+                third_party: third_party
+            }).save().then((newUser) => {
+                generate_session(res, newUser, username);
+                res.redirect(client + '/main');
+            });
+        }
+        else {
+            generate_session(res, user[0], username);
+            res.redirect(client + '/main');
+        }
     });
 }
 // ==============================================================================
@@ -211,7 +209,7 @@ const logout = (req, res) => {
     let sid = req.cookies[cookieKey];
     userObj = {};
     sessionUser = {};
-    redis.del(sid);
+    // redis.del(sid);
     // res.cookie(cookieKey, null, { maxAge: -1, httpOnly: true });
     res.clearCookie(cookieKey, "", { expires: new Date(0) });
     res.status(200).send('OK');
