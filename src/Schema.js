@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema({
     third_party: {
         type: [Third],
         default: []
+    },
+    auth: {
+        type: [],
+        default: []
     }
 }, { autoIndex: true });
 
