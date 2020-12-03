@@ -208,7 +208,7 @@ const logout = (req, res) => {
     let sid = req.cookies[cookieKey];
     userObj = {};
     sessionUser = {};
-    redis.srem(sid);
+    redis.del(sid);
     // res.cookie(cookieKey, null, { maxAge: -1, httpOnly: true });
     res.clearCookie(cookieKey, "", { expires: new Date(0) });
     res.status(200).send('OK');
