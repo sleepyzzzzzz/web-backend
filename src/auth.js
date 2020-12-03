@@ -7,15 +7,28 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const User = require('./Schema').User;
 const Profile = require('./Schema').Profile;
+const Article = require('./Schema').Article;
 
 const mySecretMessage = "comp531finalsleepyzzzzzzbackend";
 const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
+const server = 'http://localhost:3000';
+const client = 'http://localhost:8080';
+const sub_pwd = '111';
+
 
 const getHash = (salt, password) => {
     return md5(salt + password);
+}
+
+const generate_session = (res, user, username) => {
+    let sessionKey = md5(mySecretMessage + new Date().getTime() + username);
+    sessionUser[sessionKey] = user;
+    redis.hmset(sessionKey, user);
+    res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+    // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
 }
 
 const isLoggedIn = (req, res, next) => {
@@ -67,12 +80,19 @@ const register = (req, res) => {
             let salt = username + new Date().getTime();
             let hash = getHash(salt, password);
 
-            new User({ username, salt, hash }).save(function (err) {
+            new User({ username: username, salt: salt, hash: hash }).save(function (err) {
                 if (err) {
                     return console.error(err);
                 }
             });
-            new Profile({ username, displayname, email, dob, zipcode, phone }).save(function (err) {
+            new Profile({
+                username: username,
+                displayname: displayname,
+                email: email,
+                dob: dob,
+                zipcode: zipcode,
+                phone: phone
+            }).save(function (err) {
                 if (err) {
                     return console.error(err);
                 }
@@ -102,11 +122,7 @@ const login = (req, res) => {
         userObj = { username: user[0].username, salt: user[0].salt, hash: user[0].hash };
         let hash = md5(userObj.salt + password);
         if (hash === userObj.hash) {
-            let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
-            sessionUser[sessionKey] = userObj;
-            redis.hmset(sessionKey, userObj);
-            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+            generate_session(res, userObj, userObj.username);
             let msg = { username: username, result: 'success' };
             res.status(200).send(msg);
         }
@@ -121,9 +137,9 @@ passport.serializeUser(function (user, done) {
     done(null, user.id);
 });
 
-passport.deserializeUser(function (user, done) {
-    User.findById(id, function (err, user) {
-        done(null, user);
+passport.deserializeUser(function (id, done) {
+    User.findOne({ googleId: id }).exec(function (err, user) {
+        done(null, user)
     })
 });
 
@@ -131,38 +147,59 @@ passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: process.env.GOOGLE_CALLBACK_URL
-},
-    function (accessToken, refreshToken, profile, done) {
-        let username = profile.username;
-        // User.findOne({ username: username }).exec(function (err, user) {
-        //     if (err) {
-        //         return console.error(err);
-        //     }
-        //     if (!user || user.length === 0) {
-        //         new User({ id: profile.id, username: username }).save(function (err) {
-        //             if (err) {
-        //                 return console.log(err)
-        //             }
-        //         })
-        //         let displayname = profile.displayName;
-        //         let email = profile.email;
-        //         let dob = new Date();
-        //         let zipcode = null;
-        //         new Profile({ username, displayname, email, dob, zipcode }).save(function (err) {
-        //             if (err) {
-        //                 return console.error(err);
-        //             }
-        //         });
-        //     }
-        //     return done(null, profile)
-        // })
-        // console.log('profile');
-        // console.log(profile);
-        // return done(null, profile);
-        let userProfile = profile;
-        return done(null, userProfile);
-    }
-));
+}, (accessToken, refreshToken, profile, done) => {
+    done(null, profile);
+}));
+
+const success = (req, res) => {
+    let profile = req.user;
+    let googleId = profile.id;
+    let username = profile.displayName;
+    User.find({ googleId: googleId }).exec(function (err, user) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!user || user.length === 0) {
+            let displayname = profile.displayname;
+            let email = profile.emails[0].value;
+            let dob = new Date(1997, 12, 24);
+            let zipcode = 77251;
+            let avatar = profile.photos[0].value;
+            new Profile({
+                username: username,
+                displayname: displayname,
+                email: email,
+                dob: dob,
+                zipcode: zipcode,
+                avatar: avatar
+            }).save(function (err) {
+                if (err) {
+                    return console.error(err);
+                }
+
+            });
+            let password = sub_pwd;
+            let salt = username + new Date().getTime();
+            let hash = getHash(salt, password);
+            let provider = profile.provider;
+            let third_party = [{ id: googleId, provider: provider }];
+            new User({
+                username: username,
+                salt: salt,
+                hash: hash,
+                googleId: googleId,
+                third_party: third_party
+            }).save().then((newUser) => {
+                generate_session(res, newUser, username);
+                res.redirect(client + '/main');
+            });
+        }
+        else {
+            generate_session(res, user[0], username);
+            res.redirect(client + '/main');
+        }
+    });
+}
 // ==============================================================================
 
 const logout = (req, res) => {
@@ -197,6 +234,185 @@ const putPassword = (req, res) => {
         });
 }
 
+const updateLinkFollow = (link_username, username) => {
+    Profile.find({ username: link_username }).exec(function (err, profile) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!profile || profile.length === 0) {
+            return res.status(401).send('The user does not exist');
+        }
+        let link_follow = profile.following;
+        Profile.find({ username: username }).exec(function (err1, profile1) {
+            if (err1) {
+                return console.error(err1);
+            }
+            if (!profile1 || profile1.length === 0) {
+                return res.status(401).send('The user does not exist');
+            }
+            let cur_follow = profile1.following;
+            let tmp_link_follow = new Set(cur_follow.concat(link_follow));
+            let add_link_follow = Array.from(tmp_link_follow);
+            Profile.findOneAndUpdate(
+                { username: username },
+                { $set: { following: add_link_follow } },
+                { new: true, upsert: true },
+                function (err, user) {
+                    if (err) {
+                        return console.error(err);
+                    }
+                    Profile.findOneAndUpdate(
+                        { username: link_username },
+                        { $set: { following: [] } },
+                        { new: true, upsert: true },
+                        function (err1, user1) {
+                            if (err1) {
+                                return console.error(err1);
+                            }
+                        });
+                });
+        })
+    })
+}
+
+const addLink = (req, res) => {
+    let google_user = req.user.googleId !== '' ? true : false;
+    let username = req.body.username;
+    let password = req.body.password;
+    if (!username || !password) {
+        return res.status(400).send('Username or password is missing');
+    }
+    User.find({ username: username }).exec(function (err, user) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!user || user.length === 0) {
+            return res.status(401).send('The user has not registered');
+        }
+        if (google_user) {
+            let salt = user[0].salt;
+            let hash = md5(salt + password);
+            if (hash === user[0].hash) {
+                let google_username = req.user.username;
+                let linked = { google: google_username };
+                User.findOneAndUpdate(
+                    { username: username },
+                    { $addToSet: { auth: linked } },
+                    { new: true, upsert: true },
+                    function (err, user) {
+                        if (err) {
+                            return console.error(err);
+                        }
+                        let msg = { username: username, auth: user.auth };
+                        res.status(200).send(msg);
+                    });
+            }
+            else {
+                return res.status(401).send('Password is not correct');
+            }
+        }
+        else {
+            let linked = { google: user[0] };
+            User.findOneAndUpdate(
+                { username: username },
+                { $addToSet: { auth: linked } },
+                { new: true, upsert: true },
+                function (err, user1) {
+                    if (err1) {
+                        return console.error(err1);
+                    }
+                    updateLinkFollow(user[0], username);
+                    let msg = { username: username, auth: user1.auth };
+                    res.status(200).send(msg);
+                });
+        }
+    })
+}
+
+const unLink = (req, res) => {
+    let username = req.user.username;
+    let unlink_user = req.params.user;
+    let provider = 'google';
+    User.find({ username: username }).exec(function (err, user) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!user || user.length === 0) {
+            return res.status(401).send('No such user');
+        }
+        let auth = user[0].auth;
+        let unlinked = { google: unlink_user };
+        for (let key in auth) {
+            if (auth[key].google) {
+                User.findOneAndUpdate(
+                    { username: username },
+                    { $set: { auth: [] } },
+                    { new: true, upsert: true, safe: true },
+                    function (err, user) {
+                        if (err) {
+                            return console.error(err);
+                        }
+                        let msg = { username: username, auth: user.auth };
+                        return res.status(200).send(msg);
+                    });
+            }
+        }
+    })
+}
+
+const linkAccountUpdate = (req, res) => {
+    let username = req.user.username;
+    User.find({ username: username }).exec(function (err, user) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!user || user.length === 0) {
+            return res.status(401).send('No such user');
+        }
+        let auth = user[0].auth;
+        if (auth.length !== 0) {
+            let linked = auth[google];
+            Profile.find({ username: linked }).exec(function (err1, user1) {
+                if (err1) {
+                    return console.error(err1);
+                }
+                if (!user1 || user1.length === 0) {
+                    return res.status(401).send('No such user');
+                }
+                let follow = user1[0].following;
+                if (follow.length > 0) {
+                    Profile.findOneAndUpdate(
+                        { username: linked },
+                        { $set: { following: [] } },
+                        { new: true, upsert: true },
+                        function (err1, user1) {
+                            if (err1) {
+                                return console.error(err1);
+                            }
+                            let msg = { username: username, result: 'update link account succeess' };
+                            res.status(200).send(msg);
+                        });
+                }
+            })
+        }
+    })
+}
+
+const getLink = (req, res) => {
+    let username = req.user.username;
+    User.find({ username: username }).exec(function (err, user) {
+        if (err) {
+            return console.error(err);
+        }
+        if (!user || user.length === 0) {
+            return res.status(401).send('No such user');
+        }
+        let auth = user[0].auth;
+        let msg = { username: username, auth: auth };
+        res.status(200).send(msg);
+    });
+}
+
 module.exports = (app) => {
     app.use(cookieParser());
     app.use(session({
@@ -210,15 +426,15 @@ module.exports = (app) => {
         function (req, res) {
         });
 
-    app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }),
-        function (req, res) {
-            res.redirect('/success');
-        });
-    app.get('/success', (req, res) => res.send(userProfile));
+    app.get('/google/callback', passport.authenticate('google', { failureRedirect: client }), success);
 
     app.post('/register', register);
     app.post('/login', login);
     app.use(isLoggedIn);
     app.put('/logout', logout);
     app.put('/password', putPassword);
+    app.post('/link', addLink);
+    app.put('/link', linkAccountUpdate);
+    app.get('/unlink/:user', unLink);
+    app.get('/link', getLink);
 }
