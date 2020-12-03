@@ -24,26 +24,26 @@ const isLoggedIn = (req, res, next) => {
     if (!sid) {
         return res.status(401).send('No session key for cookie key. Please login');
     }
-    // let user = sessionUser[sid];
-    // if (user) {
-    //     req.user = user;
-    //     next();
-    // }
-    // else {
-    //     return res.status(401).send('No user login!');
-    // }
-    redis.hgetall(sid, function (err, user) {
-        if (err) {
-            throw err;
-        }
-        if (user) {
-            req.user = user
-            next()
-        }
-        else {
-            res.status(401).send('No user login!');
-        }
-    })
+    let user = sessionUser[sid];
+    if (user) {
+        req.user = user;
+        next();
+    }
+    else {
+        return res.status(401).send('No user login!');
+    }
+    // redis.hgetall(sid, function (err, user) {
+    //     if (err) {
+    //         throw err;
+    //     }
+    //     if (user) {
+    //         req.user = user
+    //         next()
+    //     }
+    //     else {
+    //         res.status(401).send('No user login!');
+    //     }
+    // })
 }
 
 const register = (req, res) => {
