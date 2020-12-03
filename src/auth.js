@@ -154,6 +154,7 @@ passport.use(new GoogleStrategy({
 }));
 
 const success = (req, res) => {
+    console.log(req.user);
     let profile = req.user;
     let googleId = profile.id;
     let username = profile.displayName;
