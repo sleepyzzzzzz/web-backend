@@ -138,62 +138,62 @@ passport.use(new GoogleStrategy({
     }
 ));
 
-const google_success = (req, res) => {
-    let profile = req.user;
-    console.log(profile);
-    User.findOne({ 'third_party.provider': profile.provider, 'third_party.id': profile.id }).exec(function (err, user) {
-        if (err) {
-            return res.redirect(suc_url);
-        }
-        if (user) {
-            let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
-            sessionUser[sessionKey] = userObj;
-            // redis.hmset(sessionKey, userObj)
-            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
-            return res.redirect(suc_url);
-        }
-        console.log('in');
-        console.log(profile);
-        User.findOne({ username: profile.displayname }).exec(function (err, user) {
-            if (err) {
-                return res.redirect(suc_url);
-            }
-            if (user) {
-                return res.redirect(suc_url);
-            }
-            let [year, month, day] = ['1997', '12', '24'];
-            let dob = new Date(year, parseInt(month) - 1, day);
-            let username = profile.displayname;
-            let displayname = profile.displayname;
-            let email = profile.emails[0].value;
-            let zipcode = 77251;
-            let avatar = profile.photos[0].value;
+// const google_success = (req, res) => {
+//     let profile = req.user;
+//     console.log(profile);
+//     User.findOne({ 'third_party.provider': profile.provider, 'third_party.id': profile.id }).exec(function (err, user) {
+//         if (err) {
+//             return res.redirect(suc_url);
+//         }
+//         if (user) {
+//             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
+//             sessionUser[sessionKey] = userObj;
+//             // redis.hmset(sessionKey, userObj)
+//             res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+//             // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+//             return res.redirect(suc_url);
+//         }
+//         console.log('in');
+//         console.log(profile);
+//         User.findOne({ username: profile.displayname }).exec(function (err, user) {
+//             if (err) {
+//                 return res.redirect(suc_url);
+//             }
+//             if (user) {
+//                 return res.redirect(suc_url);
+//             }
+//             let [year, month, day] = ['1997', '12', '24'];
+//             let dob = new Date(year, parseInt(month) - 1, day);
+//             let username = profile.displayname;
+//             let displayname = profile.displayname;
+//             let email = profile.emails[0].value;
+//             let zipcode = 77251;
+//             let avatar = profile.photos[0].value;
 
-            let salt = username + new Date().getTime();
-            let hash = getHash(salt, profile.id);
-            let third = [{ id: profile.id, provider: profile.provider }]
+//             let salt = username + new Date().getTime();
+//             let hash = getHash(salt, profile.id);
+//             let third = [{ id: profile.id, provider: profile.provider }]
 
-            // new User({ username, salt, hash, third }).save(function (err) {
-            //     if (err) {
-            //         return res.redirect(suc_url);
-            //     }
-            //     let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
-            //     sessionUser[sessionKey] = userObj;
-            //     // redis.hmset(sessionKey, userObj)
-            //     // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-            //     res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
-            //     return res.redirect(suc_url);
-            // });
-            // new Profile({ username, displayname, email, dob, zipcode, avatar }).save(function (err) {
-            //     if (err) {
-            //         return res.redirect(suc_url);
-            //     }
-            // });
-            return res.redirect(suc_url);
-        })
-    });
-};
+//             // new User({ username, salt, hash, third }).save(function (err) {
+//             //     if (err) {
+//             //         return res.redirect(suc_url);
+//             //     }
+//             //     let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
+//             //     sessionUser[sessionKey] = userObj;
+//             //     // redis.hmset(sessionKey, userObj)
+//             //     // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+//             //     res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+//             //     return res.redirect(suc_url);
+//             // });
+//             // new Profile({ username, displayname, email, dob, zipcode, avatar }).save(function (err) {
+//             //     if (err) {
+//             //         return res.redirect(suc_url);
+//             //     }
+//             // });
+//             return res.redirect(suc_url);
+//         })
+//     });
+// };
 // ==============================================================================
 
 const logout = (req, res) => {
@@ -240,7 +240,9 @@ module.exports = (app) => {
         function (req, res) {
         });
 
-    app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), google_success);
+    app.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), function (err, res) {
+        res.redirect('/main');
+    });
     app.get('/success', (req, res) => res.send(userProfile));
 
     app.post('/register', register);
