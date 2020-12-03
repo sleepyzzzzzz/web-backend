@@ -31,12 +31,12 @@ const isLoggedIn = (req, res, next) => {
     // else {
     //     return res.status(401).send('No user login!');
     // }
-    redis.hgetall(sid, function (err, userObj) {
+    redis.hgetall(sid, function (err, user) {
         if (err) {
             throw err;
         }
-        if (userObj) {
-            req.user = userObj
+        if (user) {
+            req.user = user
             next()
         }
         else {
@@ -105,7 +105,7 @@ const login = (req, res) => {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
             redis.hmset(sessionKey, userObj)
-            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
             // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
             let msg = { username: username, result: 'success' };
             res.status(200).send(msg);
