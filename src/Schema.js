@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Created hash is required']
     },
-    authId: {
+    googleId: {
         type: String,
         default: ''
     },
