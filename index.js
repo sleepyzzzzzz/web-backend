@@ -6,8 +6,8 @@ const cors = require('cors');
 require('dotenv').config();
 
 const connectionString = 'mongodb+srv://dbccc:1711@ctest.s3vxw.mongodb.net/Testing?retryWrites=true&w=majority';
-// const corsOptions = { origin: 'http://localhost:8080', credentials: true, methods: "GET, POST, PUT, DELETE" };
-const corsOptions = { origin: 'https://yz166-final-frontend.surge.sh', credentials: true, methods: "GET, POST, PUT, DELETE" };
+const corsOptions = { origin: 'http://localhost:8080', credentials: true, methods: "GET, POST, PUT, DELETE" };
+// const corsOptions = { origin: 'https://yz166-final-frontend.surge.sh', credentials: true, methods: "GET, POST, PUT, DELETE" };
 
 const auth = require('./src/auth');
 const profile = require('./src/profile');
