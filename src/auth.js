@@ -41,7 +41,7 @@ const isLoggedIn = (req, res, next) => {
     //         next()
     //     }
     //     else {
-    //         res.status(401).send('No user login!');
+    //         return res.status(401).send('No user login!');
     //     }
     // })
 }
@@ -149,8 +149,8 @@ const google_success = (req, res) => {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
             // redis.hmset(sessionKey, userObj)
-            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+            res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+            // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
             return res.redirect(suc_url);
         }
         console.log('in');
