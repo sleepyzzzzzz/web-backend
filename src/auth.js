@@ -23,26 +23,26 @@ const isLoggedIn = (req, res, next) => {
     if (!sid) {
         return res.status(401).send('No session key for cookie key. Please login');
     }
-    let user = sessionUser[sid];
-    if (user) {
-        req.user = user;
-        next();
-    }
-    else {
-        return res.status(401).send('No user login!');
-    }
-    // redis.hgetall(sid, function (err, userObj) {
-    //     if (err) {
-    //         throw err;
-    //     }
-    //     if (userObj) {
-    //         req.user = userObj
-    //         next()
-    //     }
-    //     else {
-    //         return res.status(401).send('No user login!');
-    //     }
-    // })
+    // let user = sessionUser[sid];
+    // if (user) {
+    //     req.user = user;
+    //     next();
+    // }
+    // else {
+    //     return res.status(401).send('No user login!');
+    // }
+    redis.hgetall(sid, function (err, userObj) {
+        if (err) {
+            throw err;
+        }
+        if (userObj) {
+            req.user = userObj
+            next()
+        }
+        else {
+            return res.status(401).send('No user login!');
+        }
+    })
 }
 
 const register = (req, res) => {
@@ -104,7 +104,7 @@ const login = (req, res) => {
         if (hash === userObj.hash) {
             let sessionKey = md5(mySecretMessage + new Date().getTime() + userObj.username);
             sessionUser[sessionKey] = userObj;
-            // redis.hmset(sessionKey, userObj)
+            redis.hmset(sessionKey, userObj)
             res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
             // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
             let msg = { username: username, result: 'success' };
@@ -166,9 +166,11 @@ passport.use(new GoogleStrategy({
 // ==============================================================================
 
 const logout = (req, res) => {
+    let sid = req.cookies[cookieKey];
     userObj = {};
     sessionUser = {};
-    res.cookie(cookieKey, null, { maxAge: -1, httpOnly: true });
+    redis.srem(sid);
+    // res.cookie(cookieKey, null, { maxAge: -1, httpOnly: true });
     res.clearCookie(cookieKey, "", { expires: new Date(0) });
     res.status(200).send('OK');
 }
