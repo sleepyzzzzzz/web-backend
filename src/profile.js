@@ -201,6 +201,12 @@ const putAvatar = (req, res) => {
         });
 }
 
+const getUsername = (req, res) => {
+    let username = req.user.username;
+    let msg = { username: username };
+    res.status(200).send(msg);
+}
+
 const getUsers = (req, res) => {
     Profile.find({}, ['username', 'avatar'], function (err, users) {
         if (err) {
@@ -226,5 +232,6 @@ module.exports = (app) => {
     app.put('/phone', putPhone);
     app.get('/avatar/:user?', getAvatar);
     app.put('/avatar', uploadImage('avatars'), putAvatar);
+    app.get('/username', getUsername);
     app.get('/users', getUsers);
 }
