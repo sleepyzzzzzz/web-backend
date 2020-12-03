@@ -14,8 +14,10 @@ const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
-const server = 'http://localhost:3000';
-const client = 'http://localhost:8080';
+// const server = 'http://localhost:3000';
+// const client = 'http://localhost:8080';
+const server = 'https://yz166-final-backend.herokuapp.com';
+const client = 'https://yz166-final-frontend.surge.sh';
 const sub_pwd = '111';
 
 
