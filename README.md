@@ -12,4 +12,4 @@ frontend: https://yz166-final-frontend.surge.sh
 
 backend: https://yz166-final-backend.herokuapp.com
 
-(if link an Google Account, stub password is 111)
+(if link an Google Account, stub password entered in linking account is 111)
