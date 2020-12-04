@@ -301,7 +301,7 @@ const addLink = (req, res) => {
                 let linked = { google: google_username };
                 User.findOneAndUpdate(
                     { username: username },
-                    { $addToSet: { auth: linked } },
+                    { $set: { auth: linked } },
                     { new: true, upsert: true },
                     function (err, user1) {
                         if (err) {
