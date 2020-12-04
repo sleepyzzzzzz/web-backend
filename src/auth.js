@@ -14,10 +14,10 @@ const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
-// const server = 'http://localhost:3000';
-// const client = 'http://localhost:8080';
-const server = 'https://yz166-final-backend.herokuapp.com';
-const client = 'https://yz166-final-frontend.surge.sh';
+const server = 'http://localhost:3000';
+const client = 'http://localhost:8080';
+// const server = 'https://yz166-final-backend.herokuapp.com';
+// const client = 'https://yz166-final-frontend.surge.sh';
 const sub_pwd = '111';
 
 
@@ -29,8 +29,8 @@ const generate_session = (res, user, username) => {
     let sessionKey = md5(mySecretMessage + new Date().getTime() + username);
     sessionUser[sessionKey] = user;
     // redis.hmset(sessionKey, user);
-    res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-    // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+    // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+    res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
 }
 
 const isLoggedIn = (req, res, next) => {
@@ -236,7 +236,7 @@ const putPassword = (req, res) => {
         });
 }
 
-const updateLinkFollow = (link_username, username) => {
+const updateLinkFollow = (link_username, username, google_user) => {
     Profile.find({ username: link_username }).exec(function (err, profile) {
         if (err) {
             return console.error(err);
@@ -244,7 +244,7 @@ const updateLinkFollow = (link_username, username) => {
         if (!profile || profile.length === 0) {
             return res.status(401).send('The user does not exist');
         }
-        let link_follow = profile.following;
+        let link_follow = profile[0].following;
         Profile.find({ username: username }).exec(function (err1, profile1) {
             if (err1) {
                 return console.error(err1);
@@ -252,7 +252,7 @@ const updateLinkFollow = (link_username, username) => {
             if (!profile1 || profile1.length === 0) {
                 return res.status(401).send('The user does not exist');
             }
-            let cur_follow = profile1.following;
+            let cur_follow = profile1[0].following;
             let tmp_link_follow = new Set(cur_follow.concat(link_follow));
             let add_link_follow = Array.from(tmp_link_follow);
             Profile.findOneAndUpdate(
@@ -263,22 +263,24 @@ const updateLinkFollow = (link_username, username) => {
                     if (err) {
                         return console.error(err);
                     }
-                    Profile.findOneAndUpdate(
-                        { username: link_username },
-                        { $set: { following: [] } },
-                        { new: true, upsert: true },
-                        function (err1, user1) {
-                            if (err1) {
-                                return console.error(err1);
-                            }
-                        });
+                    if (!google_user) {
+                        Profile.findOneAndUpdate(
+                            { username: link_username },
+                            { $set: { following: [] } },
+                            { new: true, upsert: true },
+                            function (err1, user1) {
+                                if (err1) {
+                                    return console.error(err1);
+                                }
+                            });
+                    }
                 });
         })
     })
 }
 
 const addLink = (req, res) => {
-    let google_user = req.user.googleId !== '' ? true : false;
+    let google_user = req.user.googleId ? true : false;
     let username = req.body.username;
     let password = req.body.password;
     if (!username || !password) {
@@ -301,11 +303,12 @@ const addLink = (req, res) => {
                     { username: username },
                     { $addToSet: { auth: linked } },
                     { new: true, upsert: true },
-                    function (err, user) {
+                    function (err, user1) {
                         if (err) {
                             return console.error(err);
                         }
-                        let msg = { username: username, auth: user.auth };
+                        updateLinkFollow(google_username, username, google_user);
+                        let msg = { username: username, auth: user1.auth };
                         res.status(200).send(msg);
                     });
             }
@@ -314,17 +317,17 @@ const addLink = (req, res) => {
             }
         }
         else {
-            let linked = { google: user[0] };
+            let linked = { google: username };
             User.findOneAndUpdate(
-                { username: username },
+                { username: req.user.username },
                 { $addToSet: { auth: linked } },
                 { new: true, upsert: true },
-                function (err, user1) {
+                function (err1, user1) {
                     if (err1) {
                         return console.error(err1);
                     }
-                    updateLinkFollow(user[0], username);
-                    let msg = { username: username, auth: user1.auth };
+                    updateLinkFollow(username, req.user.username, google_user);
+                    let msg = { username: req.user.username, auth: user1.auth };
                     res.status(200).send(msg);
                 });
         }
@@ -373,7 +376,7 @@ const linkAccountUpdate = (req, res) => {
         }
         let auth = user[0].auth;
         if (auth.length !== 0) {
-            let linked = auth[google];
+            let linked = auth[0]['google'];
             Profile.find({ username: linked }).exec(function (err1, user1) {
                 if (err1) {
                     return console.error(err1);
@@ -409,9 +412,27 @@ const getLink = (req, res) => {
         if (!user || user.length === 0) {
             return res.status(401).send('No such user');
         }
-        let auth = user[0].auth;
-        let msg = { username: username, auth: auth };
-        res.status(200).send(msg);
+        if (user[0].googleId !== '') {
+            User.find({}, ['username', 'auth'], function (err1, users) {
+                if (err1) {
+                    return console.error(err1);
+                }
+                if (!users || users.length === 0) {
+                    return res.status(400).send('No linked account');
+                }
+                for (let i = 0; i < users.length; i++) {
+                    if (users[i].auth.length > 0 && users[i].auth[0]['google'] === username) {
+                        let msg = { username: users[i].username, auth: users[i].auth };
+                        res.status(200).send(msg);
+                    }
+                }
+            })
+        }
+        else {
+            let auth = user[0].auth;
+            let msg = { username: username, auth: auth };
+            res.status(200).send(msg);
+        }
     });
 }
 
