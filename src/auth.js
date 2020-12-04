@@ -407,9 +407,9 @@ const linkAccountUpdate = (req, res) => {
                         { username: linked },
                         { $set: { following: [] } },
                         { new: true, upsert: true },
-                        function (err1, user1) {
-                            if (err1) {
-                                return console.error(err1);
+                        function (err2, user2) {
+                            if (err2) {
+                                return console.error(err2);
                             }
                             let msg = { username: username, result: 'update link account succeess' };
                             res.status(200).send(msg);
