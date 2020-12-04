@@ -14,10 +14,10 @@ const cookieKey = 'sid';
 let sessionUser = {};
 let userObj = {};
 
-const server = 'http://localhost:3000';
-const client = 'http://localhost:8080';
-// const server = 'https://yz166-final-backend.herokuapp.com';
-// const client = 'https://yz166-final-frontend.surge.sh';
+// const server = 'http://localhost:3000';
+// const client = 'http://localhost:8080';
+const server = 'https://yz166-final-backend.herokuapp.com';
+const client = 'https://yz166-final-frontend.surge.sh';
 const sub_pwd = '111';
 
 
@@ -29,8 +29,8 @@ const generate_session = (res, user, username) => {
     let sessionKey = md5(mySecretMessage + new Date().getTime() + username);
     sessionUser[sessionKey] = user;
     // redis.hmset(sessionKey, user);
-    // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
-    res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
+    res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true, sameSite: 'None', secure: true });
+    // res.cookie(cookieKey, sessionKey, { maxAge: 3600 * 1000, httpOnly: true });
 }
 
 const isLoggedIn = (req, res, next) => {
