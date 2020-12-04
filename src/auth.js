@@ -286,6 +286,9 @@ const addLink = (req, res) => {
     if (!username || !password) {
         return res.status(400).send('Username or password is missing');
     }
+    if (username === req.user.username) {
+        return res.status(401).send('Cannot link yourself');
+    }
     User.find({ username: username }).exec(function (err, user) {
         if (err) {
             return console.error(err);
@@ -338,6 +341,9 @@ const unLink = (req, res) => {
     let username = req.user.username;
     let unlink_user = req.params.user;
     let provider = 'google';
+    if (!username) {
+        return res.status(400).send('Username is missing');
+    }
     User.find({ username: username }).exec(function (err, user) {
         if (err) {
             return console.error(err);
@@ -345,22 +351,33 @@ const unLink = (req, res) => {
         if (!user || user.length === 0) {
             return res.status(401).send('No such user');
         }
+        if (user[0].googleId) {
+            return res.status(401).send('Only Site user can unlink an account');
+        }
         let auth = user[0].auth;
         let unlinked = { google: unlink_user };
+        let exist = false;
         for (let key in auth) {
-            if (auth[key].google) {
-                User.findOneAndUpdate(
-                    { username: username },
-                    { $set: { auth: [] } },
-                    { new: true, upsert: true, safe: true },
-                    function (err, user) {
-                        if (err) {
-                            return console.error(err);
-                        }
-                        let msg = { username: username, auth: user.auth };
-                        return res.status(200).send(msg);
-                    });
+            if (auth[key]['google'] === unlink_user) {
+                exist = true;
+                break;
             }
+        }
+        if (exist) {
+            User.findOneAndUpdate(
+                { username: username },
+                { $set: { auth: [] } },
+                { new: true, upsert: true, safe: true },
+                function (err, user) {
+                    if (err) {
+                        return console.error(err);
+                    }
+                    let msg = { username: username, auth: user.auth };
+                    return res.status(200).send(msg);
+                });
+        }
+        else {
+            return res.status(401).send('You are not linking this account');
         }
     })
 }
